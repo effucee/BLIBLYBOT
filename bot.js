@@ -1,13 +1,14 @@
 import OpenAI from "openai";
 import { Client, GatewayIntentBits, Events } from "discord.js";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const config = require("./config.json");
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const MODEL = "anthropic/claude-haiku-4-5";
-const MAX_HISTORY = 10; // messages kept per channel (user + assistant pairs)
-const SYSTEM_PROMPT =
-  "You are Blibly, a friendly and helpful Discord bot. Keep your replies concise and conversational.";
+const { model, maxHistory, maxTokens, systemPrompt } = config;
 
 // ── Clients ───────────────────────────────────────────────────────────────────
 const openrouter = new OpenAI({
@@ -33,14 +34,15 @@ function getHistory(channelId) {
 }
 
 function trimHistory(history) {
-  // Keep only the last MAX_HISTORY messages (each turn = 2 entries)
-  const limit = MAX_HISTORY * 2;
+  const limit = maxHistory * 2;
   if (history.length > limit) history.splice(0, history.length - limit);
 }
 
 // ── Discord event handlers ────────────────────────────────────────────────────
 discord.once(Events.ClientReady, (client) => {
   console.log(`✅ Logged in as ${client.user.tag}`);
+  console.log(`   Model:      ${model}`);
+  console.log(`   MaxHistory: ${maxHistory} messages`);
 });
 
 discord.on(Events.MessageCreate, async (message) => {
@@ -69,10 +71,10 @@ discord.on(Events.MessageCreate, async (message) => {
 
   try {
     const response = await openrouter.chat.completions.create({
-      model: MODEL,
-      max_tokens: 1024,
+      model,
+      max_tokens: maxTokens,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         ...history,
       ],
     });
