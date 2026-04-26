@@ -4,7 +4,7 @@ const DISCORD_MSG_LIMIT = 1900;
 
 const UNLINKED_MESSAGE =
   `Hey! 👋 I can chat with you, but to get the full experience — including personalized memory across our conversations — you'll want to link your JAIDE account first!\n\n` +
-  `Just send me **"link"** in a DM, or **@Blibly link** here, and I'll send you a code to connect your account at **jaide.moe**. 🔗\n\n` +
+  `Just send me **"link"** in a DM, or **@Blibly link** here, and I'll send you a code to connect your account at **jaide.net**. 🔗\n\n` +
   `Otherwise, feel free to ask me anything!`;
 
 /**
@@ -16,19 +16,12 @@ const UNLINKED_MESSAGE =
  * @param {object} discordContext - { channelId, guildId }
  * @param {Function} reply - Async function to send the reply back to Discord
  * @param {Function} sendTyping - Async function to show typing indicator
- * @param {boolean} suppressUnlinkedPrompt - Skip the unlinked prompt (e.g. for link/unlink flows)
  */
-async function handleBlibyMessage(userMessage, discordUserId, discordContext, reply, sendTyping, suppressUnlinkedPrompt = false) {
+async function handleBlibyMessage(userMessage, discordUserId, discordContext, reply, sendTyping) {
   try {
     await sendTyping();
 
     const user_id = await getJaideUserId(discordUserId);
-
-    // Prompt unlinked users once before responding
-    if (!user_id && !suppressUnlinkedPrompt) {
-      await reply(UNLINKED_MESSAGE);
-      return;
-    }
 
     const context = {
       page: 'discord',
@@ -58,4 +51,4 @@ async function handleBlibyMessage(userMessage, discordUserId, discordContext, re
   }
 }
 
-module.exports = { handleBlibyMessage };
+module.exports = { handleBlibyMessage, UNLINKED_MESSAGE };
