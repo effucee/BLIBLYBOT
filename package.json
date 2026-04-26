@@ -12,3 +12,8 @@
     "dotenv": "^16.4.5"
   }
 }
+
+"scripts": {
+  "start": "node src/index.js",
+  "register": "node src/register-commands.js"
+}
