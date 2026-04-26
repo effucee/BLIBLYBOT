@@ -92,6 +92,7 @@ client.on(Events.InteractionCreate, async interaction => {
   if (interaction.commandName === 'blibly') {
     const userMessage = interaction.options.getString('message');
     await interaction.deferReply();
+    
 
     await handleBlibyMessage(
       userMessage,
@@ -126,6 +127,8 @@ client.on(Events.MessageCreate, async message => {
     .replace(`<@${client.user.id}>`, '')
     .replace(`<@!${client.user.id}>`, '')
     .trim();
+
+  console.log(`[MessageCreate] userMessage: "${userMessage}" normalized: "${userMessage.toLowerCase()}"`); // ADD THIS
 
   if (!userMessage) {
     await message.reply("Hey! What can I help you with? 😊");
