@@ -40,7 +40,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       await interaction.user.send(
         `👋 Your JAIDE link code is: **${code}**\n\n` +
-        `Head to your profile settings on **jaide.moe**, find "Link Discord Account", and enter this code.\n` +
+        `Head to your profile settings on **jaide.net**, find "Link Discord Account", and enter this code.\n` +
         `⏱️ This code expires in **15 minutes**.`
       );
 
@@ -120,7 +120,7 @@ async function handleLinkKeyword(message) {
 
     await message.author.send(
       `👋 Your JAIDE link code is: **${code}**\n\n` +
-      `Head to your profile settings on **jaide.moe**, find "Link Discord Account", and enter this code.\n` +
+      `Head to your profile settings on **jaide.net**, find "Link Discord Account", and enter this code.\n` +
       `⏱️ This code expires in **15 minutes**.`
     );
 
