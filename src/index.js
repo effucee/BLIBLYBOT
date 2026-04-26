@@ -192,24 +192,10 @@ client.on(Events.MessageCreate, async message => {
 
   const user_id = await getJaideUserId(message.author.id);
 
-  // Smart link detection for unlinked users
-  if (!user_id && normalized.includes('link')) {
-    const success = await handleLinkKeyword(message);
-    if (success) {
-      await message.reply(
-        "_(Looks like you mentioned \"link\" — so I went ahead and sent you a code! " +
-        "Sorry if that wasn't what you meant!)_"
-      );
-    }
-    return;
-  }
-
-  // First-time unlinked user prompt
-  const isFirstTime = !promptedUnlinkedUsers.has(message.author.id);
-  if (!user_id && isFirstTime) {
+  // Prepend link warning on first message for unlinked users, then still respond
+  if (!user_id && !promptedUnlinkedUsers.has(message.author.id)) {
     promptedUnlinkedUsers.add(message.author.id);
     await message.reply(UNLINKED_MESSAGE);
-    return;
   }
 
   // ── Everything else → Blibly response ──
