@@ -5,7 +5,10 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
  * Call a Supabase Edge Function
  */
 async function callEdgeFunction(name, body) {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+  const url = `${SUPABASE_URL}/functions/v1/${name}`;
+  console.log(`[callEdgeFunction] Calling ${url}`);
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -16,6 +19,7 @@ async function callEdgeFunction(name, body) {
 
   if (!res.ok) {
     const text = await res.text();
+    console.error(`[callEdgeFunction] ${name} failed: ${res.status} — ${text}`);
     throw new Error(`Edge function ${name} failed: ${res.status} — ${text}`);
   }
 
@@ -27,16 +31,24 @@ async function callEdgeFunction(name, body) {
  * Returns null if the user hasn't linked their account
  */
 async function getJaideUserId(discordId) {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/profiles?discord_id=eq.${discordId}&select=id&limit=1`,
-    {
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-      }
+  const url = `${SUPABASE_URL}/rest/v1/profiles?discord_id=eq.${discordId}&select=id&limit=1`;
+  console.log(`[getJaideUserId] Fetching ${url}`);
+
+  const res = await fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
     }
-  );
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`[getJaideUserId] Failed: ${res.status} — ${text}`);
+    return null;
+  }
+
   const rows = await res.json();
+  console.log(`[getJaideUserId] Result for ${discordId}:`, rows);
   return rows?.[0]?.id ?? null;
 }
 

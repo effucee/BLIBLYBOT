@@ -2,6 +2,11 @@ const { callEdgeFunction, getJaideUserId } = require('./supabase');
 
 const DISCORD_MSG_LIMIT = 1900;
 
+const UNLINKED_MESSAGE =
+  `Hey! 👋 I can chat with you, but to get the full experience — including personalized memory across our conversations — you'll want to link your JAIDE account first!\n\n` +
+  `Just send me **"link"** in a DM, or **@Blibly link** here, and I'll send you a code to connect your account at **jaide.moe**. 🔗\n\n` +
+  `Otherwise, feel free to ask me anything!`;
+
 /**
  * Send a message to the Blibly Edge Function and reply in Discord.
  * Works for both slash commands and direct/mention messages.
@@ -11,12 +16,19 @@ const DISCORD_MSG_LIMIT = 1900;
  * @param {object} discordContext - { channelId, guildId }
  * @param {Function} reply - Async function to send the reply back to Discord
  * @param {Function} sendTyping - Async function to show typing indicator
+ * @param {boolean} suppressUnlinkedPrompt - Skip the unlinked prompt (e.g. for link/unlink flows)
  */
-async function handleBlibyMessage(userMessage, discordUserId, discordContext, reply, sendTyping) {
+async function handleBlibyMessage(userMessage, discordUserId, discordContext, reply, sendTyping, suppressUnlinkedPrompt = false) {
   try {
     await sendTyping();
 
     const user_id = await getJaideUserId(discordUserId);
+
+    // Prompt unlinked users once before responding
+    if (!user_id && !suppressUnlinkedPrompt) {
+      await reply(UNLINKED_MESSAGE);
+      return;
+    }
 
     const context = {
       page: 'discord',
@@ -31,13 +43,13 @@ async function handleBlibyMessage(userMessage, discordUserId, discordContext, re
       user_id
     });
 
-    // Split response if it exceeds Discord's 2000 char limit
+    // Split response if it exceeds Discord's character limit
     if (blibyReply.length <= DISCORD_MSG_LIMIT) {
       await reply(blibyReply);
     } else {
       const chunks = blibyReply.match(new RegExp(`.{1,${DISCORD_MSG_LIMIT}}`, 'gs')) ?? [];
       for (let i = 0; i < chunks.length; i++) {
-        await reply(chunks[i], i > 0); // after first chunk, send as follow-up
+        await reply(chunks[i], i > 0);
       }
     }
   } catch (err) {
