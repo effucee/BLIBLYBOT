@@ -92,7 +92,6 @@ client.on(Events.InteractionCreate, async interaction => {
   if (interaction.commandName === 'blibly') {
     const userMessage = interaction.options.getString('message');
     await interaction.deferReply();
-    
 
     await handleBlibyMessage(
       userMessage,
@@ -111,6 +110,43 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 
+// ─── Link/Unlink helpers ──────────────────────────────────────────────────────
+
+async function handleLinkKeyword(message) {
+  try {
+    const { code } = await callEdgeFunction('discord-generate-link-code', {
+      discord_id: message.author.id
+    });
+
+    await message.author.send(
+      `👋 Your JAIDE link code is: **${code}**\n\n` +
+      `Head to your profile settings on **jaide.moe**, find "Link Discord Account", and enter this code.\n` +
+      `⏱️ This code expires in **15 minutes**.`
+    );
+
+    return true;
+  } catch (err) {
+    console.error('Link keyword error:', err);
+    await message.reply("Something went wrong generating your link code. Please try again!");
+    return false;
+  }
+}
+
+async function handleUnlinkKeyword(message) {
+  try {
+    const user_id = await getJaideUserId(message.author.id);
+    if (!user_id) {
+      await message.reply("Your Discord account isn't linked to a JAIDE profile.");
+      return;
+    }
+    await callEdgeFunction('discord-unlink', { discord_id: message.author.id });
+    await message.reply("Your Discord account has been unlinked from JAIDE!");
+  } catch (err) {
+    console.error('Unlink keyword error:', err);
+    await message.reply("Something went wrong. Please try again!");
+  }
+}
+
 // ─── Message Events (@ mentions + DMs) ───────────────────────────────────────
 
 client.on(Events.MessageCreate, async message => {
@@ -128,13 +164,31 @@ client.on(Events.MessageCreate, async message => {
     .replace(`<@!${client.user.id}>`, '')
     .trim();
 
-  console.log(`[MessageCreate] userMessage: "${userMessage}" normalized: "${userMessage.toLowerCase()}"`); // ADD THIS
+  console.log(`[MessageCreate] userMessage: "${userMessage}" normalized: "${userMessage.toLowerCase()}"`);
 
   if (!userMessage) {
     await message.reply("Hey! What can I help you with? 😊");
     return;
   }
 
+  const normalized = userMessage.toLowerCase();
+
+  // ── Keyword: link ──
+  if (normalized === 'link') {
+    const success = await handleLinkKeyword(message);
+    if (success && isMention) {
+      await message.reply("I've sent you a DM with your link code! 📬");
+    }
+    return;
+  }
+
+  // ── Keyword: unlink ──
+  if (normalized === 'unlink') {
+    await handleUnlinkKeyword(message);
+    return;
+  }
+
+  // ── Everything else → Blibly response ──
   await handleBlibyMessage(
     userMessage,
     message.author.id,
